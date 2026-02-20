@@ -20,7 +20,7 @@ const HeaderSection = () => {
         {/* Brand */}
         <div className="d-flex align-items-center gap-2">
           <span className="fw-bold fs-4" style={{ letterSpacing: "1px" }}>
-            ✈ Maroon Travelers
+             Maroon Travelers
           </span>
           <span className="badge bg-warning text-dark ms-2">Admin Panel</span>
         </div>

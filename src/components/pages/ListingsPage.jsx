@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { fetchListings, deleteListing } from "../slices/listingsSlice";
 import { fetchCategories } from "../slices/categoriesSlice";
+import { useNavigate } from "react-router-dom";
 
 function formatINR(value) {
   const n = Number(value || 0);
@@ -36,13 +37,17 @@ function SkeletonCard() {
   );
 }
 
-export default function ListingsPage({ onEdit }) {
+export default function ListingsPage() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const token = useSelector((s) => s.adminAuth.token);
 
-  const { items: listings, loading: listingsLoading, error: listingsError } =
-    useSelector((s) => s.listings);
+  const {
+    items: listings,
+    loading: listingsLoading,
+    error: listingsError,
+  } = useSelector((s) => s.listings);
 
   const { items: categories } = useSelector((s) => s.categories);
 
@@ -79,7 +84,9 @@ export default function ListingsPage({ onEdit }) {
         const name = String(l.placeName || "").toLowerCase();
         const city = String(l.address?.city || "").toLowerCase();
         const pin = String(l.address?.pin || "").toLowerCase();
-        return name.includes(query) || city.includes(query) || pin.includes(query);
+        return (
+          name.includes(query) || city.includes(query) || pin.includes(query)
+        );
       });
     }
 
@@ -100,15 +107,15 @@ export default function ListingsPage({ onEdit }) {
       arr.sort((a, b) => Number(b.createdAt || 0) - Number(a.createdAt || 0));
     } else if (sort === "priceLow") {
       arr.sort(
-        (a, b) => Number(a.pricePerNight || 0) - Number(b.pricePerNight || 0)
+        (a, b) => Number(a.pricePerNight || 0) - Number(b.pricePerNight || 0),
       );
     } else if (sort === "priceHigh") {
       arr.sort(
-        (a, b) => Number(b.pricePerNight || 0) - Number(a.pricePerNight || 0)
+        (a, b) => Number(b.pricePerNight || 0) - Number(a.pricePerNight || 0),
       );
     } else if (sort === "name") {
       arr.sort((a, b) =>
-        String(a.placeName || "").localeCompare(String(b.placeName || ""))
+        String(a.placeName || "").localeCompare(String(b.placeName || "")),
       );
     }
 
@@ -143,9 +150,7 @@ export default function ListingsPage({ onEdit }) {
           </div>
         </div>
 
-        <span className="badge text-bg-dark">
-          Total: {filtered.length}
-        </span>
+        <span className="badge text-bg-dark">Total: {filtered.length}</span>
       </div>
 
       {!token && (
@@ -176,7 +181,7 @@ export default function ListingsPage({ onEdit }) {
               {categories
                 .slice()
                 .sort((a, b) =>
-                  String(a.name || "").localeCompare(String(b.name || ""))
+                  String(a.name || "").localeCompare(String(b.name || "")),
                 )
                 .map((c) => (
                   <option key={c.id} value={c.id}>
@@ -231,10 +236,10 @@ export default function ListingsPage({ onEdit }) {
 
       {/* Empty state */}
       {!listingsLoading && filtered.length === 0 && (
-        <div className="text-center py-5">
+        <div className="text-center  py-5" style={{color:"white"}}>
           <h5 className="mb-2">No listings found</h5>
           <div className="text-muted">
-            Try changing filters or add a new listing.
+           <h5 style={{color:"white"}}> Try changing filters or add a new listing.</h5>
           </div>
         </div>
       )}
@@ -304,7 +309,10 @@ export default function ListingsPage({ onEdit }) {
                       </div>
 
                       {l.description && (
-                        <p className="card-text mt-2 text-muted" style={{ fontSize: 14 }}>
+                        <p
+                          className="card-text mt-2 text-muted"
+                          style={{ fontSize: 14 }}
+                        >
                           {String(l.description).slice(0, 90)}
                           {String(l.description).length > 90 ? "..." : ""}
                         </p>
@@ -313,7 +321,7 @@ export default function ListingsPage({ onEdit }) {
                       <div className="mt-auto d-flex gap-2">
                         <button
                           className="btn btn-outline-dark btn-sm w-100"
-                          onClick={() => onEdit?.(l)} // pass listing to parent if you want
+                          onClick={() => navigate(`/admin/edit/${l.id}`)}
                           type="button"
                         >
                           Edit
@@ -354,7 +362,9 @@ export default function ListingsPage({ onEdit }) {
                   </span>
                 </li>
 
-                <li className={`page-item ${page >= totalPages ? "disabled" : ""}`}>
+                <li
+                  className={`page-item ${page >= totalPages ? "disabled" : ""}`}
+                >
                   <button
                     className="page-link"
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}

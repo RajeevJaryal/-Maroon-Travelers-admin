@@ -1,17 +1,22 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { useParams, useNavigate } from "react-router-dom";
 import { fetchCategories } from "../slices/categoriesSlice";
-import { addListing, clearListingsError } from "../slices/listingsSlice";
+import { fetchListings, updateListing } from "../slices/listingsSlice";
 
-export default function AddListing() {
+export default function EditListing() {
+  const { id } = useParams();
+  const navigate = useNavigate();
   const dispatch = useDispatch();
+
   const token = useSelector((s) => s.adminAuth.token);
+  const { items: categories, loading: catsLoading } = useSelector((s) => s.categories);
+  const { items: listings } = useSelector((s) => s.listings);
 
-  const { items: categories, loading: catsLoading, error: catsError } =
-    useSelector((s) => s.categories);
-
-  const { loading: listingLoading, error: listingError } =
-    useSelector((s) => s.listings);
+  const listing = useMemo(
+    () => (listings || []).find((x) => x.id === id),
+    [listings, id]
+  );
 
   const [placeName, setPlaceName] = useState("");
   const [pricePerNight, setPricePerNight] = useState("");
@@ -22,14 +27,33 @@ export default function AddListing() {
   const [description, setDescription] = useState("");
   const [isAvailable, setIsAvailable] = useState(true);
 
-  // Image URL inputs (3-4)
+  // image links (3–4)
   const [imageUrls, setImageUrls] = useState(["", "", ""]);
-  const [successMsg, setSuccessMsg] = useState("");
 
   useEffect(() => {
     if (!token) return;
     dispatch(fetchCategories());
+    dispatch(fetchListings()); // ensure listing exists after refresh
   }, [dispatch, token]);
+
+  useEffect(() => {
+    if (!listing) return;
+
+    setPlaceName(listing.placeName || "");
+    setPricePerNight(listing.pricePerNight || "");
+    setStreet(listing.address?.street || "");
+    setCity(listing.address?.city || "");
+    setPin(listing.address?.pin || "");
+    setCategoryId(listing.categoryId || "");
+    setDescription(listing.description || "");
+    setIsAvailable(!!listing.isAvailable);
+
+    const imgs = (listing.images || []).slice(0, 4);
+    const base = ["", "", ""];
+    for (let i = 0; i < Math.min(3, imgs.length); i++) base[i] = imgs[i];
+    if (imgs.length === 4) base.push(imgs[3]);
+    setImageUrls(base);
+  }, [listing]);
 
   const sortedCategories = useMemo(() => {
     return [...categories].sort((a, b) =>
@@ -37,88 +61,70 @@ export default function AddListing() {
     );
   }, [categories]);
 
-  const handleImageChange = (index, value) => {
-    setImageUrls((prev) => {
-      const updated = [...prev];
-      updated[index] = value;
-      return updated;
-    });
+  const handleImageChange = (idx, val) => {
+    const copy = [...imageUrls];
+    copy[idx] = val;
+    setImageUrls(copy);
   };
 
   const addImageField = () => {
-    setImageUrls((prev) => (prev.length < 4 ? [...prev, ""] : prev));
+    if (imageUrls.length < 4) setImageUrls([...imageUrls, ""]);
   };
 
   const removeImageField = () => {
-    setImageUrls((prev) => (prev.length > 3 ? prev.slice(0, -1) : prev));
+    if (imageUrls.length > 3) setImageUrls(imageUrls.slice(0, -1));
   };
 
-  const resetForm = () => {
-    setPlaceName("");
-    setPricePerNight("");
-    setStreet("");
-    setCity("");
-    setPin("");
-    setCategoryId("");
-    setDescription("");
-    setIsAvailable(true);
-    setImageUrls(["", "", ""]);
-  };
-
-  const onSubmit = async (e) => {
+  const onSave = async (e) => {
     e.preventDefault();
-    setSuccessMsg("");
-    dispatch(clearListingsError());
 
-    if (!token) return;
-
-    // trim & validate urls
     const validUrls = imageUrls.map((u) => u.trim()).filter(Boolean);
     if (validUrls.length < 3) {
       alert("Please enter at least 3 image URLs.");
       return;
     }
 
-    // validate required fields
-    if (!placeName.trim()) return alert("Place name is required");
-    if (!city.trim()) return alert("City is required");
-    if (!pin.trim()) return alert("PIN is required");
-    if (!categoryId) return alert("Category is required");
-
-    const price = Number(pricePerNight);
-    if (!price || price <= 0) return alert("Enter valid price per night");
-
-    const listingData = {
-      placeName: placeName.trim(),
-      pricePerNight: price,
+    const data = {
+      placeName,
+      pricePerNight,
+      street,
+      city,
+      pin,
       categoryId,
-      description: description.trim(),
+      description,
       isAvailable,
       images: validUrls,
-      address: {
-        street: street.trim(),
-        city: city.trim(),
-        pin: pin.trim(),
-      },
     };
 
-    const res = await dispatch(addListing(listingData));
-
-    if (addListing.fulfilled.match(res)) {
-      setSuccessMsg("Listing added successfully ✅");
-      resetForm();
+    const res = await dispatch(updateListing({ id, data }));
+    if (updateListing.fulfilled.match(res)) {
+      navigate("/admin/listings");
     }
   };
 
+  if (!listing) {
+    return (
+      <div className="container py-4">
+        <div className="alert alert-warning">
+          Listing not found. Try going back to Listings.
+        </div>
+        <button className="btn btn-dark" onClick={() => navigate("/admin/listings")}>
+          Back
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="container py-4" style={{ maxWidth: 950 }}>
-      <h3>Create Listing</h3>
+      <div className="d-flex align-items-center justify-content-between mb-3">
+        <h3 className="m-0">Edit Listing</h3>
+        <button className="btn btn-outline-dark" onClick={() => navigate("/admin/listings")}>
+          Back
+        </button>
+      </div>
 
-      {catsError && <div className="alert alert-danger">{catsError}</div>}
-      {listingError && <div className="alert alert-danger">{listingError}</div>}
-      {successMsg && <div className="alert alert-success">{successMsg}</div>}
-
-      <form className="card shadow-sm p-3" onSubmit={onSubmit}>
+      <form className="card shadow-sm p-3" onSubmit={onSave}>
         <div className="row g-3">
           <div className="col-md-6">
             <label className="form-label">Place name *</label>
@@ -126,6 +132,7 @@ export default function AddListing() {
               className="form-control"
               value={placeName}
               onChange={(e) => setPlaceName(e.target.value)}
+              placeholder="e.g. Lake View Villa"
               required
             />
           </div>
@@ -137,18 +144,19 @@ export default function AddListing() {
               className="form-control"
               value={pricePerNight}
               onChange={(e) => setPricePerNight(e.target.value)}
+              placeholder="e.g. 4500"
+              min="1"
               required
             />
           </div>
 
-          {/* Address */}
           <div className="col-md-4">
-            <label className="form-label">Street</label>
+            <label className="form-label">Street / Area</label>
             <input
               className="form-control"
               value={street}
               onChange={(e) => setStreet(e.target.value)}
-              placeholder="Street / Landmark"
+              placeholder="Optional"
             />
           </div>
 
@@ -158,16 +166,18 @@ export default function AddListing() {
               className="form-control"
               value={city}
               onChange={(e) => setCity(e.target.value)}
+              placeholder="e.g. Manali"
               required
             />
           </div>
 
           <div className="col-md-4">
-            <label className="form-label">PIN *</label>
+            <label className="form-label">PIN code *</label>
             <input
               className="form-control"
               value={pin}
               onChange={(e) => setPin(e.target.value)}
+              placeholder="e.g. 175131"
               required
             />
           </div>
@@ -178,10 +188,11 @@ export default function AddListing() {
               className="form-select"
               value={categoryId}
               onChange={(e) => setCategoryId(e.target.value)}
+              disabled={catsLoading}
               required
             >
               <option value="">
-                {catsLoading ? "Loading..." : "Select category"}
+                {catsLoading ? "Loading categories..." : "Select category"}
               </option>
               {sortedCategories.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -191,71 +202,63 @@ export default function AddListing() {
             </select>
           </div>
 
-          {/* Availability */}
           <div className="col-md-6 d-flex align-items-end">
             <div className="form-check">
               <input
                 className="form-check-input"
                 type="checkbox"
+                id="availableEdit"
                 checked={isAvailable}
                 onChange={(e) => setIsAvailable(e.target.checked)}
-                id="availableCheck"
               />
-              <label className="form-check-label" htmlFor="availableCheck">
+              <label className="form-check-label" htmlFor="availableEdit">
                 Available
               </label>
             </div>
           </div>
 
-          {/* Description */}
           <div className="col-12">
             <label className="form-label">Description</label>
             <textarea
               className="form-control"
-              rows={3}
+              rows="3"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Write a short description..."
+              placeholder="Optional description..."
             />
           </div>
 
-          {/* Image URLs */}
           <div className="col-12">
-            <label className="form-label">Image URLs (3–4)</label>
+            <label className="form-label">Select 3–4 Images *</label>
 
-            {imageUrls.map((url, index) => (
+            {imageUrls.map((url, idx) => (
               <input
-                key={index}
+                key={idx}
                 type="text"
                 className="form-control mb-2"
-                placeholder={`Image URL ${index + 1}`}
                 value={url}
-                onChange={(e) => handleImageChange(index, e.target.value)}
+                onChange={(e) => handleImageChange(idx, e.target.value)}
+                placeholder={`Paste image URL ${idx + 1}`}
               />
             ))}
 
-            <button
-              type="button"
-              className="btn btn-sm btn-secondary me-2"
-              onClick={addImageField}
-              disabled={imageUrls.length >= 4}
-            >
-              + Add
-            </button>
+            <div className="form-text">
+              Minimum 3 image links, maximum 4 image links.
+            </div>
 
-            <button
-              type="button"
-              className="btn btn-sm btn-danger"
-              onClick={removeImageField}
-              disabled={imageUrls.length <= 3}
-            >
-              - Remove
-            </button>
+            <div className="mt-2">
+              <button type="button" className="btn btn-sm btn-secondary me-2" onClick={addImageField}>
+                + Add Image
+              </button>
+              <button type="button" className="btn btn-sm btn-danger" onClick={removeImageField}>
+                - Remove Image
+              </button>
+            </div>
           </div>
         </div>
 
-        <button className="btn btn-dark mt-3" disabled={listingLoading}>
-          {listingLoading ? "Saving..." : "Add Listing"}
+        <button className="btn btn-dark mt-3" type="submit">
+          Save Changes
         </button>
       </form>
     </div>

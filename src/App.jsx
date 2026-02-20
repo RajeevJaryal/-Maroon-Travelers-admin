@@ -11,8 +11,10 @@ import HeaderSection from "./components/LoginSection/Header/HeaderSection";
 import AddListing from "./components/addingProduct/AddListing";
 import ListingsPage from "./components/pages/ListingsPage";
 import ProtectedAdminRoute from "./components/routes/ProtectedAdminRoute";
+import EditListing from "./components/addingProduct/EditListing";
 
 import { restoreAdminSession } from "./components/slices/AdminAuthSlice";
+import AdminBookings from "./components/pages/AdminBookings";
 
 function App() {
   const dispatch = useDispatch();
@@ -39,6 +41,8 @@ function App() {
         <Route element={<ProtectedAdminRoute />}>
           <Route path="/admin/add-listing" element={<AddListing />} />
           <Route path="/admin/listings" element={<ListingsPage />} />
+          <Route path="/admin/edit/:id" element={<EditListing />} />
+          <Route path="/admin/bookings" element={<AdminBookings/>}/>
         </Route>
 
         <Route path="*" element={<h2>Page Not Found</h2>} />

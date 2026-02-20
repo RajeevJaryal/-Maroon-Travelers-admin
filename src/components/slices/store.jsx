@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import adminAuthReducer from "./AdminAuthSlice";
 import categoriesReducer from "./categoriesSlice";
 import listingsReducer from "./listingsSlice";
+import bookingsReducer from "./BookingsSlice";
 // Configure Redux store
 const store = configureStore({
   reducer: {
@@ -9,6 +10,8 @@ const store = configureStore({
     adminAuth: adminAuthReducer,
     categories: categoriesReducer,
     listings: listingsReducer,
+    bookings: bookingsReducer,
+
   },
 
   // DevTools automatically enabled in development

@@ -53,25 +53,6 @@ export const addCategory = createAsyncThunk(
     }
   }
 );
-export const seedCategories = createAsyncThunk(
-  "categories/seedCategories",
-  async (_, { getState, rejectWithValue }) => {
-    try {
-      const token = getState().adminAuth.token;
-      if (!token) return rejectWithValue("Please login first.");
-
-      const base = { params: { auth: token } };
-
-      await dbAPI.put("/categories/villa.json", { name: "Villa" }, base);
-      await dbAPI.put("/categories/apartment.json", { name: "Apartment" }, base);
-      await dbAPI.put("/categories/houseboat.json", { name: "Houseboat" }, base);
-
-      return true;
-    } catch (err) {
-      return rejectWithValue("Failed to seed categories");
-    }
-  }
-);
 
 export const updateCategory = createAsyncThunk(
   "categories/updateCategory",
