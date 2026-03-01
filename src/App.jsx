@@ -9,12 +9,12 @@ import SplashCursor from "./SplashCursor";
 import LoginPage from "./components/LoginSection/LoginPage/LoginPage";
 import HeaderSection from "./components/LoginSection/Header/HeaderSection";
 import AddListing from "./components/addingProduct/AddListing";
-import ListingsPage from "./components/pages/ListingsPage";
+import ListingsPage from "./components/pages/listings/ListingsPage";
 import ProtectedAdminRoute from "./components/routes/ProtectedAdminRoute";
 import EditListing from "./components/addingProduct/EditListing";
 
 import { restoreAdminSession } from "./components/slices/AdminAuthSlice";
-import AdminBookings from "./components/pages/AdminBookings";
+import AdminBookings from "./components/pages/bookings/AdminBookings";
 
 function App() {
   const dispatch = useDispatch();

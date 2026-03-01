@@ -4,31 +4,46 @@ import { useDispatch, useSelector } from "react-redux";
 import { logoutAdmin } from "../../slices/AdminAuthSlice";
 
 const linkStyle = ({ isActive }) =>
-  `nav-link px-2 ${isActive ? "text-warning fw-semibold" : "text-white-50"}`;
+  `nav-link ${isActive ? "text-warning fw-semibold" : "text-white-50"}`;
 
 const HeaderSection = () => {
   const dispatch = useDispatch();
   const { token, email, isAdmin } = useSelector((s) => s.adminAuth);
 
   const handleLogout = () => dispatch(logoutAdmin());
-
   const showNav = token && isAdmin;
 
   return (
-    <header className="bg-dark text-white shadow-sm">
-      <div className="container d-flex justify-content-between align-items-center py-3">
+    <nav className="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm">
+      <div className="container">
         {/* Brand */}
-        <div className="d-flex align-items-center gap-2">
-          <span className="fw-bold fs-4" style={{ letterSpacing: "1px" }}>
-             Maroon Travelers
+        <span
+          className="navbar-brand fw-bold"
+          style={{ letterSpacing: "1px" }}
+        >
+          Maroon Travelers
+          <span className="badge bg-warning text-dark ms-2">
+            Admin Panel
           </span>
-          <span className="badge bg-warning text-dark ms-2">Admin Panel</span>
-        </div>
+        </span>
 
-        {/* Navigation */}
+        {/* Hamburger Button (Mobile) */}
         {showNav && (
-          <nav>
-            <ul className="nav">
+          <button
+            className="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#adminNavbar"
+          >
+            <span className="navbar-toggler-icon"></span>
+          </button>
+        )}
+
+        {/* Collapsible Content */}
+        {showNav && (
+          <div className="collapse navbar-collapse" id="adminNavbar">
+            {/* Left Nav Links */}
+            <ul className="navbar-nav me-auto mb-2 mb-lg-0">
               <li className="nav-item">
                 <NavLink to="/admin/dashboard" className={linkStyle}>
                   Dashboard
@@ -59,20 +74,21 @@ const HeaderSection = () => {
                 </NavLink>
               </li>
             </ul>
-          </nav>
-        )}
 
-        {/* Right side */}
-        {showNav && (
-          <div className="d-flex align-items-center gap-3">
-            <span className="text-light small">{email}</span>
-            <button onClick={handleLogout} className="btn btn-outline-light btn-sm">
-              Logout
-            </button>
+            {/* Right Side */}
+            <div className="d-flex align-items-lg-center flex-column flex-lg-row gap-2">
+              <span className="text-light small">{email}</span>
+              <button
+                onClick={handleLogout}
+                className="btn btn-outline-light btn-sm"
+              >
+                Logout
+              </button>
+            </div>
           </div>
         )}
       </div>
-    </header>
+    </nav>
   );
 };
 

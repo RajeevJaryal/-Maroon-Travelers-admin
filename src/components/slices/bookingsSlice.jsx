@@ -40,26 +40,6 @@ export const createBooking = createAsyncThunk(
   }
 );
 
-// ✅ Fetch bookings of a user (Order History)
-export const fetchBookingsByUser = createAsyncThunk(
-  "bookings/fetchByUser",
-  async ({ userId, idToken }, { rejectWithValue }) => {
-    try {
-      const token = String(idToken || "").trim();
-      if (!token) throw new Error("Missing token");
-      if (!userId) throw new Error("Missing userId");
-
-      const res = await dbAPI.get(`/bookingsByUser/${userId}.json?auth=${token}`);
-
-      const data = res.data;
-      if (!data) return [];
-
-      return Object.entries(data).map(([id, b]) => ({ id, ...b }));
-    } catch (e) {
-      return rejectWithValue(e.response?.data?.error || e.message);
-    }
-  }
-);
 
 // ✅ Fetch all bookings (Admin)
 export const fetchAllBookings = createAsyncThunk(
@@ -79,6 +59,7 @@ export const fetchAllBookings = createAsyncThunk(
     }
   }
 );
+
 
 // ✅ Approve booking (Admin) - updates both paths
 export const approveBooking = createAsyncThunk(
@@ -177,19 +158,6 @@ const bookingsSlice = createSlice({
         state.error = action.payload || "Booking failed";
       })
 
-      // FETCH BY USER
-      .addCase(fetchBookingsByUser.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchBookingsByUser.fulfilled, (state, action) => {
-        state.loading = false;
-        state.items = action.payload;
-      })
-      .addCase(fetchBookingsByUser.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload || "Failed to load bookings";
-      })
 
       // FETCH ALL
       .addCase(fetchAllBookings.pending, (state) => {
